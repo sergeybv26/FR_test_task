@@ -23,7 +23,34 @@ class MailingSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class MessageSerializer(serializers.ModelSerializer):
+class MessageStatSerializer(serializers.ModelSerializer):
+    sending_status = serializers.CharField(read_only=True)
+    msq_quantity = serializers.IntegerField()
+
     class Meta:
         model = Message
-        fields = '__all__'
+        fields = ['sending_status', 'msq_quantity']
+
+
+class MailingStatSerializer(serializers.ModelSerializer):
+    msg_stat = serializers.SerializerMethodField()
+    message = serializers.CharField(read_only=True)
+
+    class Meta:
+        model = Mailing
+        fields = ['id', 'message', 'msg_stat']
+
+    def get_msg_stat(self, obj):
+        return obj.get_messages()
+
+
+class MessageSerializer(serializers.ModelSerializer):
+    client_phone = serializers.ReadOnlyField(source='client_id.phone_number')
+    client_tz = serializers.ReadOnlyField(source='client_id.timezone')
+    mail_start = serializers.ReadOnlyField(source='mailing_id.start_time')
+    mail_end = serializers.ReadOnlyField(source='mailing_id.end_time')
+    message = serializers.ReadOnlyField(source='mailing_id.message')
+
+    class Meta:
+        model = Message
+        fields = ['id', 'sending_status', 'client_phone', 'client_tz', 'mail_start', 'mail_end', 'message']

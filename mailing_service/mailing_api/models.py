@@ -1,6 +1,8 @@
+import pika as pika
 import pytz
+from django.conf import settings
 from django.db import models
-from django.db.models import Q
+from django.db.models import Q, Count
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
@@ -19,7 +21,9 @@ class Mailing(models.Model):
 
     def get_messages(self):
         """Получает все сообщения по рассылке"""
-        return self.mailingmessage.select_related()
+        return self.mailingmessage.select_related().values('sending_status') \
+            .annotate(msq_quantity=Count('sending_status')) \
+            .values('sending_status', 'msq_quantity').order_by()
 
 
 class Client(models.Model):
@@ -74,3 +78,31 @@ def create_message(sender, instance, created, **kwargs):
             msg = Message(mailing_id=instance, client_id=client)
             objs.append(msg)
         Message.objects.bulk_create(objs)
+
+
+# @receiver(post_save, sender=Message)
+# def sending_queue_create(sender, instance, created, **kwargs):
+#     if created:
+#         connection = pika.BlockingConnection(pika.ConnectionParameters(settings.PIKA_HOST))
+#         channel = connection.channel()
+#         channel.queue_declare(queue='sending')
+#         channel.basic_publish(
+#             exchange='',
+#             routing_key='sending',
+#             body=instance.id
+#         )
+#         connection.close()
+#
+#
+# @receiver(post_save, sender=Message)
+# def sending_queue_update(sender, instance, created, **kwargs):
+#     if instance.sending_status != 'CP' and instance.sending_status != 'ERR':
+#         connection = pika.BlockingConnection(pika.ConnectionParameters(settings.PIKA_HOST))
+#         channel = connection.channel()
+#         channel.queue_declare(queue='sending')
+#         channel.basic_publish(
+#             exchange='',
+#             routing_key='sending',
+#             body=instance.id
+#         )
+#         connection.close()

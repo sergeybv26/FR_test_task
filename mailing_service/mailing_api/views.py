@@ -1,10 +1,13 @@
+from django.db.models import Count
 from django.shortcuts import render
-from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView, get_object_or_404
+from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView, get_object_or_404, \
+    RetrieveUpdateAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from mailing_api.models import Client, Mailing
-from mailing_api.serializers import ClientSerializer, MailingSerializer, MessageSerializer
+from mailing_api.models import Client, Mailing, Message
+from mailing_api.serializers import ClientSerializer, MailingSerializer, MessageSerializer, MailingStatSerializer, \
+    MessageStatSerializer
 
 
 class ClientView(ListCreateAPIView):
@@ -30,5 +33,17 @@ class SingleMailingView(RetrieveUpdateDestroyAPIView):
 class MessageFromMailingStat(APIView):
     def get(self, request, pk=None):
         mailing = get_object_or_404(Mailing, pk=pk)
-        serializer = MessageSerializer(mailing.get_messages(), many=True)
+        messages = mailing.get_messages()
+        serializer = MessageStatSerializer(messages, many=True)
         return Response({'messages': serializer.data})
+
+
+class MessageAndMailingStat(ListCreateAPIView):
+    queryset = Mailing.objects.all()
+    print(queryset)
+    serializer_class = MailingStatSerializer
+
+
+class SingleMessageView(RetrieveUpdateAPIView):
+    queryset = Message.objects.all()
+    serializer_class = MessageSerializer
