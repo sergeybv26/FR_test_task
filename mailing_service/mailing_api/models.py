@@ -20,7 +20,7 @@ class Mailing(models.Model):
         verbose_name_plural = 'Рассылки'
 
     def get_messages(self):
-        """Получает все сообщения по рассылке"""
+        """Получает статистику сообщений по рассылке"""
         return self.mailingmessage.select_related().values('sending_status') \
             .annotate(msq_quantity=Count('sending_status')) \
             .values('sending_status', 'msq_quantity').order_by()
@@ -80,29 +80,32 @@ def create_message(sender, instance, created, **kwargs):
         Message.objects.bulk_create(objs)
 
 
-# @receiver(post_save, sender=Message)
-# def sending_queue_create(sender, instance, created, **kwargs):
-#     if created:
-#         connection = pika.BlockingConnection(pika.ConnectionParameters(settings.PIKA_HOST))
-#         channel = connection.channel()
-#         channel.queue_declare(queue='sending')
-#         channel.basic_publish(
-#             exchange='',
-#             routing_key='sending',
-#             body=instance.id
-#         )
-#         connection.close()
-#
-#
-# @receiver(post_save, sender=Message)
-# def sending_queue_update(sender, instance, created, **kwargs):
-#     if instance.sending_status != 'CP' and instance.sending_status != 'ERR':
-#         connection = pika.BlockingConnection(pika.ConnectionParameters(settings.PIKA_HOST))
-#         channel = connection.channel()
-#         channel.queue_declare(queue='sending')
-#         channel.basic_publish(
-#             exchange='',
-#             routing_key='sending',
-#             body=instance.id
-#         )
-#         connection.close()
+@receiver(post_save, sender=Message)
+def sending_queue_create(sender, instance, created, **kwargs):
+    print('reciewer created')
+    if created:
+        print('Create queue')
+        connection = pika.BlockingConnection(pika.ConnectionParameters(settings.PIKA_HOST))
+        channel = connection.channel()
+        channel.queue_declare(queue='sending')
+        channel.basic_publish(
+            exchange='',
+            routing_key='sending',
+            body=str(instance.id)
+        )
+        connection.close()
+
+
+@receiver(post_save, sender=Message)
+def sending_queue_update(sender, instance, **kwargs):
+    if instance.sending_status not in ('CP', 'ERR'):
+        print('UPDATED')
+        connection = pika.BlockingConnection(pika.ConnectionParameters(settings.PIKA_HOST))
+        channel = connection.channel()
+        channel.queue_declare(queue='sending')
+        channel.basic_publish(
+            exchange='',
+            routing_key='sending',
+            body=str(instance.id)
+        )
+        connection.close()

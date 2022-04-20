@@ -16,7 +16,7 @@ def request_replay(message_id):
     :param message_id: id сообщения
     :return: None
     """
-    return requests.patch(url=f'{API_HOST}api/message/{message_id}', json={'sending_status': 'RP'})
+    return requests.put(url=f'{API_HOST}api/message/{message_id}', json={'sending_status': 'RP'})
 
 
 def sender(message):
@@ -52,33 +52,28 @@ def sender(message):
             resp = request_replay(msg_id)
         else:
             if response.status_code == 200:
-                requests.patch(url=f'{API_HOST}api/message/{msg_id}', json={'sending_status': 'CP'})
+                requests.put(url=f'{API_HOST}api/message/{msg_id}', json={'sending_status': 'CP'})
                 print('completed')
             else:
                 resp = request_replay(msg_id)
                 print('repeated')
     elif start_time > datetime.datetime.now():
-        requests.patch(url=f'{API_HOST}api/message/{msg_id}', json={'sending_status': 'DL'})
+        requests.put(url=f'{API_HOST}api/message/{msg_id}', json={'sending_status': 'DL'})
         print('delay')
     else:
-        requests.patch(url=f'{API_HOST}api/message/{msg_id}', json={'sending_status': 'ERR'})
+        requests.put(url=f'{API_HOST}api/message/{msg_id}', json={'sending_status': 'ERR'})
         print('error')
 
 
-# def callback(ch, method, properties, body):
-def callback(body):
-    msg_id = body
-    msg = requests.get(url=f'{API_HOST}api/message/{msg_id}').json()
-    sender(msg)
-
-
 def main():
-    connection = pika.BlockingConnection(pika.ConnectionParameters(PIKA_HOST))
-    channel = connection.channel()
-    channel.queue_declare(queue='sending')
-    channel.basic_consume(queue='sending', on_message_callback=callback)
-    channel.start_consuming()
+
+    while True:
+        messages = requests.get(url=f'{API_HOST}api/message/').json()
+
+        if messages:
+            for message in messages:
+                sender(message)
 
 
 if __name__ == '__main__':
-    callback(body=6)
+    main()

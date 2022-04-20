@@ -1,7 +1,7 @@
 from django.urls import path
 
 from mailing_api.views import ClientView, SingleClientView, MailingView, SingleMailingView, MessageFromMailingStat, \
-    MessageAndMailingStat, SingleMessageView
+    MessageAndMailingStat, SingleMessageView, MessageView
 
 app_name = 'mailing_api'
 
@@ -13,4 +13,5 @@ urlpatterns = [
     path('mailing/statistic', MessageAndMailingStat.as_view()),
     path('mailing/statistic/<int:pk>', MessageFromMailingStat.as_view()),
     path('message/<int:pk>', SingleMessageView.as_view()),
+    path('message/', MessageView.as_view()),
 ]
