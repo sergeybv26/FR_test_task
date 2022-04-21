@@ -65,14 +65,29 @@ def sender(message):
         print('error')
 
 
+def callback(ch, method, properties, body):
+    # def callback(body):
+    msg_id = body
+    msg = requests.get(url=f'{API_HOST}api/message/{msg_id}').json()
+    sender(msg)
+
+
 def main():
+    connection = pika.BlockingConnection(pika.ConnectionParameters(PIKA_HOST))
+    channel = connection.channel()
+    channel.queue_declare(queue='sending')
+    channel.basic_consume(queue='sending', on_message_callback=callback)
+    channel.start_consuming()
 
-    while True:
-        messages = requests.get(url=f'{API_HOST}api/message/').json()
 
-        if messages:
-            for message in messages:
-                sender(message)
+# def main():
+#
+#     while True:
+#         messages = requests.get(url=f'{API_HOST}api/message/').json()
+#
+#         if messages:
+#             for message in messages:
+#                 sender(message)
 
 
 if __name__ == '__main__':

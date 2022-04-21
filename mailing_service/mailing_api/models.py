@@ -82,7 +82,6 @@ def create_message(sender, instance, created, **kwargs):
 
 @receiver(post_save, sender=Message)
 def sending_queue_create(sender, instance, created, **kwargs):
-    print('reciewer created')
     if created:
         print('Create queue')
         connection = pika.BlockingConnection(pika.ConnectionParameters(settings.PIKA_HOST))
