@@ -76,8 +76,9 @@ def create_message(sender, instance, created, **kwargs):
         objs = []
         for client in clients:
             msg = Message(mailing_id=instance, client_id=client)
-            objs.append(msg)
-        Message.objects.bulk_create(objs)
+            msg.save()
+        #     objs.append(msg)
+        # Message.objects.bulk_create(objs)
 
 
 @receiver(post_save, sender=Message)
