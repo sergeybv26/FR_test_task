@@ -70,6 +70,7 @@ def callback(ch, method, properties, body):
     msg_id = int(body)
     msg = requests.get(url=f'{API_HOST}api/message/{msg_id}').json()
     sender(msg)
+    ch.basic_ack(delivery_tag=method.delivery_tag)
 
 
 def main():
