@@ -83,7 +83,6 @@ def create_message(sender, instance, created, **kwargs):
 @receiver(post_save, sender=Message)
 def sending_queue_create(sender, instance, created, **kwargs):
     if created:
-        print('Create queue')
         connection = pika.BlockingConnection(pika.ConnectionParameters(settings.PIKA_HOST))
         channel = connection.channel()
         channel.queue_declare(queue='sending')
@@ -97,8 +96,7 @@ def sending_queue_create(sender, instance, created, **kwargs):
 
 @receiver(post_save, sender=Message)
 def sending_queue_update(sender, instance, **kwargs):
-    if instance.sending_status not in ('CP', 'ERR'):
-        print('UPDATED')
+    if instance.sending_status not in ('CP', 'ERR', 'FM'):
         connection = pika.BlockingConnection(pika.ConnectionParameters(settings.PIKA_HOST))
         channel = connection.channel()
         channel.queue_declare(queue='sending')

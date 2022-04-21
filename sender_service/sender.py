@@ -25,7 +25,7 @@ def sender(message):
     :param message: сообщение
     :return: None
     """
-    msg_id = message['id']
+    msg_id = int(message['id'])
     phone = message['client_phone']
     text = message['message']
     start_time = datetime.datetime.strptime(message['mail_start'], '%Y-%m-%dT%H:%M:%SZ')
@@ -66,8 +66,8 @@ def sender(message):
 
 
 def callback(ch, method, properties, body):
-    # def callback(body):
-    msg_id = body
+    """Обрабатывает сообщения из очереди RabbitMQ"""
+    msg_id = int(body)
     msg = requests.get(url=f'{API_HOST}api/message/{msg_id}').json()
     sender(msg)
 
@@ -78,16 +78,6 @@ def main():
     channel.queue_declare(queue='sending')
     channel.basic_consume(queue='sending', on_message_callback=callback)
     channel.start_consuming()
-
-
-# def main():
-#
-#     while True:
-#         messages = requests.get(url=f'{API_HOST}api/message/').json()
-#
-#         if messages:
-#             for message in messages:
-#                 sender(message)
 
 
 if __name__ == '__main__':
