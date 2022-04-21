@@ -4,7 +4,7 @@ import datetime
 import pika
 import requests
 
-from sender_service.variables import PIKA_HOST, API_HOST, TOKEN
+from variables import PIKA_HOST, API_HOST, TOKEN
 
 delay_list = []
 message_list = []
